@@ -10,6 +10,7 @@
 ```
 image-filter-extension/
 ├── background.js
+├── content.js
 ├── manifest.json
 └── README.md
 ```
@@ -20,6 +21,7 @@ image-filter-extension/
 |------------------|--------------------------------|
 | manifest.json | 확장 프로그램의 설정 및 권한 정의(MV3 기준) |
 | background.js | 우클릭 메뉴 등록 및 메시지 전달 핸들링 |
+| content.js | 메시지 수신 후 이미지 숨김/블러/크기 조절 처리 |
 
 ## 기능 요약
 - 확장 아이콘 클릭 시 이미지 처리 ON/OFF
@@ -39,4 +41,4 @@ image-filter-extension/
 - 변경 사항 저장 후 리로드
   - Chrome 확장 탭 → **[새로고침]** 버튼 클릭
 - 개발 로그 보기
-  - Chrome 확장 탭 > 서비스 워커 → background.js 로그 확인
+  - Chrome 확장 탭 > 서비스 워커 → `background.js` 로그 확인
