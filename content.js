@@ -4,15 +4,11 @@ const CLASS_BLUR = 'image-filter-blur';
 const CLASS_RESIZE = 'image-filter-resize';
 const CLASS_BG_HIDE = 'image-filter-background';
 
-// 초기 스타일 즉시 삽입 (선제 차단)
+let isFilterEnabled = false; // 필터 상태 캐싱
+
+// 필터용 스타일 정의
 const style = document.createElement('style');
 style.textContent = `
-  /* 초기 렌더링 시 숨김 우선 처리 */
-  img,
-  [style*="background-image"] {
-    visibility: hidden !important;
-  }
-
   .${CLASS_HIDDEN} {
     display: none !important;
     visibility: hidden !important;
@@ -34,62 +30,70 @@ style.textContent = `
 `;
 document.documentElement.prepend(style);
 
-// 필터 적용 함수
+// 필터 적용
 function applyFilters() {
-  const images = document.querySelectorAll("img");
-  images.forEach((img) => {
-    img.classList.add(CLASS_HIDDEN, CLASS_BLUR, CLASS_RESIZE);
-  });
+  try {
+    const images = document.querySelectorAll("img");
+    images.forEach((img) => {
+      img.classList.add(CLASS_HIDDEN, CLASS_BLUR, CLASS_RESIZE);
+    });
 
-  const bgElements = document.querySelectorAll("*");
-  bgElements.forEach((el) => {
-    const bg = window.getComputedStyle(el).getPropertyValue("background-image");
-    if (bg && bg !== "none") {
-      el.classList.add(CLASS_BG_HIDE);
-    }
-  });
-}
-
-// 필터 제거 함수
-function removeFilters() {
-  const images = document.querySelectorAll("img");
-  images.forEach((img) => {
-    img.classList.remove(CLASS_HIDDEN, CLASS_BLUR, CLASS_RESIZE);
-  });
-
-  const bgElements = document.querySelectorAll("*");
-  bgElements.forEach((el) => {
-    el.classList.remove(CLASS_BG_HIDE);
-  });
-}
-
-// DOM 변화 감지
-function observeDOMForFilterApplication() {
-  const observer = new MutationObserver(() => {
-    chrome.storage.local.get(["filterEnabled"], (result) => {
-      const isEnabled = result.filterEnabled ?? false;
-      if (isEnabled) {
-        applyFilters();
+    const bgElements = document.querySelectorAll("*");
+    bgElements.forEach((el) => {
+      const bg = el.style.backgroundImage || window.getComputedStyle(el).getPropertyValue("background-image");
+      if (bg && bg !== "none") {
+        el.classList.add(CLASS_BG_HIDE);
       }
     });
+  } catch (e) {
+    console.warn("[Image Filter] 필터 적용 중 오류:", e);
+  }
+}
+
+// 필터 해제
+function removeFilters() {
+  try {
+    const images = document.querySelectorAll("img");
+    images.forEach((img) => {
+      img.classList.remove(CLASS_HIDDEN, CLASS_BLUR, CLASS_RESIZE);
+    });
+
+    const bgElements = document.querySelectorAll("*");
+    bgElements.forEach((el) => {
+      el.classList.remove(CLASS_BG_HIDE);
+    });
+  } catch (e) {
+    console.warn("[Image Filter] 필터 해제 중 오류:", e);
+  }
+}
+
+// DOM 변화 즉시 처리
+function observeDOMForFilterApplication() {
+  const observer = new MutationObserver(() => {
+    if (isFilterEnabled) {
+      try {
+        applyFilters();
+      } catch (e) {
+        console.warn("[Image Filter] 감지 필터 적용 실패:", e);
+      }
+    }
   });
 
-  // document.body가 로드될 때까지 기다렸다가 observe 실행
-  function waitForBodyAndObserve() {
+  const startObserving = () => {
     if (document.body) {
       observer.observe(document.body, {
         childList: true,
         subtree: true
       });
     } else {
-      requestAnimationFrame(waitForBodyAndObserve);
+      requestAnimationFrame(startObserving);
     }
-  }
+  };
 
-  waitForBodyAndObserve();
+  startObserving();
 }
 
-// 메시지 수신 대기
+// 메시지 수신
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.action) {
     case "hideImages":
@@ -102,9 +106,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       toggleImageClass(CLASS_RESIZE);
       break;
     case "enableAllFilters":
+      isFilterEnabled = true;
       applyFilters();
       break;
     case "disableAllFilters":
+      isFilterEnabled = false;
       removeFilters();
       break;
     default:
@@ -112,7 +118,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-// 토글 함수 (우클릭)
+// 개별 필터 토글
 function toggleImageClass(className) {
   const images = document.querySelectorAll("img");
   images.forEach((img) => {
@@ -121,20 +127,20 @@ function toggleImageClass(className) {
 
   const bgElements = document.querySelectorAll("*");
   bgElements.forEach((el) => {
-    const bg = window.getComputedStyle(el).getPropertyValue("background-image");
+    const bg = el.style.backgroundImage || window.getComputedStyle(el).getPropertyValue("background-image");
     if (bg && bg !== "none") {
       el.classList.toggle(CLASS_BG_HIDE);
     }
   });
 }
 
-// 초기 진입 시 필터 상태 확인 후 적용
+// 초기 상태 불러와 필터 적용
 chrome.storage.local.get(["filterEnabled"], (result) => {
-  const isEnabled = result.filterEnabled ?? false;
-  if (isEnabled) {
+  isFilterEnabled = result.filterEnabled ?? false;
+  if (isFilterEnabled) {
     applyFilters();
   }
 });
 
-// 감시 시작
+// DOM 감시 시작
 observeDOMForFilterApplication();
