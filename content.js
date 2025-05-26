@@ -15,6 +15,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case "resizeImages":
       toggleImageClass(CLASS_RESIZE);
       break;
+    case "enableAllFilters":
+      enableAllFilters();
+      break;
+    case "disableAllFilters":
+      disableAllFilters();
+      break;
     default:
       console.warn(`[Image Filter] 알 수 없는 action: ${message.action}`);
   }
@@ -49,3 +55,19 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
+
+// 모든 이미지 필터 켜기
+function enableAllFilters() {
+  const images = document.querySelectorAll("img");
+  images.forEach((img) => {
+    img.classList.add(CLASS_HIDDEN, CLASS_BLUR, CLASS_RESIZE);
+  });
+}
+
+// 모든 이미지 필터 끄기
+function disableAllFilters() {
+  const images = document.querySelectorAll("img");
+  images.forEach((img) => {
+    img.classList.remove(CLASS_HIDDEN, CLASS_BLUR, CLASS_RESIZE);
+  });
+}
