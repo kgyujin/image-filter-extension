@@ -38,7 +38,7 @@ style.textContent = `
 
   /* 이미지 블러 처리 */
   .${CLASS_BLUR} {
-    filter: blur(8px) !important; /* 블러 강도 조절 가능 */
+    filter: blur(8px) !important;
   }
 
   /* 이미지 크기 축소 */

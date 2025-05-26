@@ -11,6 +11,11 @@
 image-filter-extension/
 ├── background.js
 ├── content.js
+├── popup.html
+├── popup.js
+├── styles/
+│   └── popup.css
+├── content.js
 ├── manifest.json
 └── README.md
 ```
@@ -22,6 +27,9 @@ image-filter-extension/
 | manifest.json | 확장 프로그램의 설정 및 권한 정의(MV3 기준) |
 | background.js | 우클릭 메뉴 등록 및 메시지 전달 핸들링 |
 | content.js | 메시지 수신 후 이미지 숨김/블러/크기 조절 처리 |
+| popup.html | 확장 프로그램 아이콘 클릭 시 표시되는 설정 UI |
+| popup.js | 토글 스위치 제어 및 content.js로 메시지 전송 |
+| styles/popup.css | 팝업 UI의 시각적 구성 |
 
 ## 기능 요약
 - 확장 아이콘 클릭 시 이미지 처리 ON/OFF
