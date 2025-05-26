@@ -29,8 +29,11 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (!tab.id) return;
 
-  // 메뉴 ID에 따라 메시지 구분
+  // 현재 선택된 옵션 저장
+  chrome.storage.local.set({ lastFilterAction: info.menuItemId });
+
+  // content.js에 메시지 전송
   chrome.tabs.sendMessage(tab.id, {
-    action: info.menuItemId  // "hideImages", "blurImages", "resizeImages"
+    action: info.menuItemId
   });
 });

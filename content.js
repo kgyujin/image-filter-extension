@@ -3,6 +3,24 @@ const CLASS_HIDDEN = 'image-filter-hidden';
 const CLASS_BLUR = 'image-filter-blur';
 const CLASS_RESIZE = 'image-filter-resize';
 
+// 확장 프로그램이 삽입된 직후 저장된 옵션이 있으면 자동 적용
+chrome.storage.local.get(["lastFilterAction"], (result) => {
+  const action = result.lastFilterAction;
+  if (action === "hideImages" || action === "blurImages" || action === "resizeImages") {
+    switch (action) {
+      case "hideImages":
+        toggleImageClass(CLASS_HIDDEN);
+        break;
+      case "blurImages":
+        toggleImageClass(CLASS_BLUR);
+        break;
+      case "resizeImages":
+        toggleImageClass(CLASS_RESIZE);
+        break;
+    }
+  }
+});
+
 // 메시지 수신 대기
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.action) {
