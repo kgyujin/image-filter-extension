@@ -32,7 +32,7 @@ image-filter-extension/
 | styles/popup.css | 팝업 UI의 시각적 구성 |
 
 ## 기능 요약
-- 확장 아이콘 클릭 시 이미지 처리 ON/OFF
+- 확장 아이콘 클릭 시 이미지 처리 ON/OFF(필터 활성화 상태에 따라 아이콘 자동 변경)
 - 우클릭 메뉴(Context Menu)를 통해 기능 수행
   - 이미지 숨기기
   - 이미지 블러 처리
