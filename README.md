@@ -11,8 +11,6 @@
 image-filter-extension/
 ├── background.js
 ├── content.js
-├── popup.html
-├── popup.js
 ├── styles/
 │   └── popup.css
 ├── content.js
@@ -26,24 +24,22 @@ image-filter-extension/
 |------------------|--------------------------------|
 | manifest.json | 확장 프로그램의 설정 및 권한 정의(MV3 기준) |
 | background.js | 우클릭 메뉴 등록 및 메시지 전달 핸들링 |
-| content.js | 메시지 수신 후 이미지 숨김/블러/크기 조절 처리 |
-| popup.html | 확장 프로그램 아이콘 클릭 시 표시되는 설정 UI |
-| popup.js | 토글 스위치 제어 및 content.js로 메시지 전송 |
+| content.js | 메시지 수신 후 이미지 숨김 처리 |
 | styles/popup.css | 팝업 UI의 시각적 구성 |
 
 ## 기능 요약
-- 확장 아이콘 클릭 시 이미지 처리 ON/OFF(필터 활성화 상태에 따라 아이콘 자동 변경)
+- 확장 아이콘 클릭 시 이미지 숨김 ON/OFF(필터 활성화 상태에 따라 아이콘 자동 변경)
 - 우클릭 메뉴(Context Menu)를 통해 기능 수행
   - 이미지 숨기기
-  - 이미지 블러 처리
-  - 이미지 크기 축소
 
 ## 실행 방법(과정)
-### Load
-1. Chrome 주소창에 `chrome://extensions/` 입력 후 진입
-2. 우측 상단 [개발자 모드] ON
-3. [압축해제된 확장 프로그램 로드] 클릭
-4. `image-filter-extension` 디렉토리 선택
+1. [해당 저장소](https://github.com/kgyujin/image-filter-extension) **[Release]** 페이지로 이동
+2. 가장 최신 릴리즈의 **Assets**에서 ZIP 파일 다운로드
+3. 다운로드한 ZIP 파일 압축 해제
+4. Chrome 주소창에 `chrome://extensions/` 입력
+5. 우측 상단 [개발자 모드] 활성화
+6. **[압축해제된 확장 프로그램 로드]** 클릭
+7. 방금 압축 해제한 폴더 선택
 
 ## 개발 및 테스트 명령어
 - 변경 사항 저장 후 리로드

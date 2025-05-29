@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "이미지 필터",
   "version": "1.0",
-  "description": "웹사이트의 이미지를 숨기거나 블러 처리하고 크기를 조절할 수 있는 크롬 확장 프로그램",
+  "description": "웹사이트의 이미지를 숨길 수 있는 크롬 확장 프로그램",
   "permissions": [
     "storage",
     "contextMenus",

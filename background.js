@@ -1,22 +1,36 @@
-// 확장 프로그램 설치 시 context menu 등록
+const DEFAULT_SETTINGS = {
+  selectedFilter: "hideImages"
+};
+
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.removeAll(() => {
-    chrome.contextMenus.create({ id: "hideImages", title: "이미지 숨기기", contexts: ["all"] });
-    chrome.contextMenus.create({ id: "blurImages", title: "이미지 블러 처리", contexts: ["all"] });
-    chrome.contextMenus.create({ id: "resizeImages", title: "이미지 크기 축소", contexts: ["all"] });
+    chrome.contextMenus.create({ id: "hideImages", title: "이미지 숨기기", type: "radio", contexts: ["all"], checked: true });
+  });
+
+  chrome.storage.local.set(DEFAULT_SETTINGS);
+});
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (!tab.id) return;
+
+  chrome.storage.local.set({ selectedFilter: info.menuItemId });
+
+  chrome.storage.local.get(["filterEnabled"], (result) => {
+    if (!result.filterEnabled) return;
+
+    chrome.tabs.sendMessage(tab.id, {
+      action: info.menuItemId
+    });
   });
 });
 
-// 아이콘 클릭 시 필터 ON/OFF 전환
 chrome.action.onClicked.addListener((tab) => {
-  chrome.storage.local.get(["filterEnabled"], (result) => {
+  chrome.storage.local.get(["filterEnabled", "selectedFilter"], (result) => {
     const isEnabled = result.filterEnabled ?? false;
     const newState = !isEnabled;
 
-    // 상태 저장
     chrome.storage.local.set({ filterEnabled: newState });
 
-    // 아이콘 업데이트
     chrome.action.setIcon({
       tabId: tab.id,
       path: {
@@ -24,28 +38,19 @@ chrome.action.onClicked.addListener((tab) => {
       }
     });
 
-    if (!tab.id) return;
-
-    // content.js에 메시지 직접 전송
     chrome.tabs.sendMessage(tab.id, {
-      action: newState ? "enableAllFilters" : "disableAllFilters"
-    }, () => {
-      if (chrome.runtime.lastError) {
-        console.warn("필터 메시지 전송 실패:", chrome.runtime.lastError.message);
-      }
+      action: newState ? (result.selectedFilter ?? "hideImages") : "disableAllFilters"
     });
   });
 });
 
-// 새로고침/탭 전환 시 아이콘 상태 동기화
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete") {
     chrome.storage.local.get(["filterEnabled"], (result) => {
-      const isEnabled = result.filterEnabled ?? false;
       chrome.action.setIcon({
         tabId,
         path: {
-          "128": isEnabled ? "icons/icon128_on.png" : "icons/icon128_off.png"
+          "128": result.filterEnabled ? "icons/icon128_on.png" : "icons/icon128_off.png"
         }
       });
     });

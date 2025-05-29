@@ -1,90 +1,104 @@
-// 이미지 토글 처리를 위한 클래스 명 정의
 const CLASS_HIDDEN = 'image-filter-hidden';
-const CLASS_BLUR = 'image-filter-blur';
-const CLASS_RESIZE = 'image-filter-resize';
 const CLASS_BG_HIDE = 'image-filter-background';
 
-let isFilterEnabled = false; // 필터 상태 캐싱
+let isFilterEnabled = false;
 
-// 필터용 스타일 정의
 const style = document.createElement('style');
-style.textContent = `
-  .${CLASS_HIDDEN} {
-    display: none !important;
-    visibility: hidden !important;
-  }
-
-  .${CLASS_BLUR} {
-    filter: blur(8px) !important;
-  }
-
-  .${CLASS_RESIZE} {
-    width: 50% !important;
-    height: auto !important;
-    object-fit: contain !important;
-  }
-
-  .${CLASS_BG_HIDE} {
-    background-image: none !important;
-  }
-`;
+style.id = 'image-filter-style';
+style.textContent = generateStyleText();
 document.documentElement.prepend(style);
 
-// 필터 적용
+function generateStyleText() {
+  return `
+    .${CLASS_HIDDEN} {
+      display: none !important;
+      visibility: hidden !important;
+    }
+    .${CLASS_BG_HIDE} {
+      background-image: none !important;
+    }
+    img[data-image-filter-prehide="true"] {
+      display: none !important;
+      visibility: hidden !important;
+    }
+  `;
+}
+
+function updateStyle() {
+  const s = document.getElementById('image-filter-style');
+  if (s) s.textContent = generateStyleText();
+}
+
+// 이미지가 DOM에 추가되는 즉시 숨김 처리
+function preHideImages() {
+  // 아직 숨겨지지 않은 img에 data 속성 추가
+  document.querySelectorAll('img:not([data-image-filter-prehide])').forEach(img => {
+    img.setAttribute('data-image-filter-prehide', 'true');
+  });
+}
+
+// prehide 속성 제거 (복구)
+function removePreHideImages() {
+  document.querySelectorAll('img[data-image-filter-prehide]').forEach(img => {
+    img.removeAttribute('data-image-filter-prehide');
+  });
+}
+
 function applyFilters() {
-  try {
-    const images = document.querySelectorAll("img");
-    images.forEach((img) => {
-      img.classList.add(CLASS_HIDDEN, CLASS_BLUR, CLASS_RESIZE);
+  preHideImages(); // 1차적으로 즉시 숨김
+
+  chrome.storage.local.get(["selectedFilter"], (result) => {
+    // 실제 필터 적용
+    document.querySelectorAll("img").forEach((img) => {
+      img.classList.add(CLASS_HIDDEN);
+      img.removeAttribute('data-image-filter-prehide'); // class 방식으로 전환
     });
 
-    const bgElements = document.querySelectorAll("*");
-    bgElements.forEach((el) => {
+    document.querySelectorAll("*").forEach((el) => {
       const bg = el.style.backgroundImage || window.getComputedStyle(el).getPropertyValue("background-image");
       if (bg && bg !== "none") {
         el.classList.add(CLASS_BG_HIDE);
       }
     });
-  } catch (e) {
-    console.warn("[Image Filter] 필터 적용 중 오류:", e);
-  }
+  });
 }
 
-// 필터 해제
 function removeFilters() {
-  try {
-    const images = document.querySelectorAll("img");
-    images.forEach((img) => {
-      img.classList.remove(CLASS_HIDDEN, CLASS_BLUR, CLASS_RESIZE);
-    });
+  document.querySelectorAll("img").forEach((img) => {
+    img.classList.remove(CLASS_HIDDEN);
+  });
 
-    const bgElements = document.querySelectorAll("*");
-    bgElements.forEach((el) => {
-      el.classList.remove(CLASS_BG_HIDE);
-    });
-  } catch (e) {
-    console.warn("[Image Filter] 필터 해제 중 오류:", e);
-  }
+  document.querySelectorAll("*").forEach((el) => {
+    el.classList.remove(CLASS_BG_HIDE);
+  });
+
+  removePreHideImages(); // prehide 속성도 복구
 }
 
-// DOM 변화 즉시 처리
 function observeDOMForFilterApplication() {
-  const observer = new MutationObserver(() => {
+  const observer = new MutationObserver((mutations) => {
     if (isFilterEnabled) {
-      try {
-        applyFilters();
-      } catch (e) {
-        console.warn("[Image Filter] 감지 필터 적용 실패:", e);
-      }
+      // 새로 추가된 img를 즉시 숨김
+      mutations.forEach(mutation => {
+        mutation.addedNodes.forEach(node => {
+          if (node.nodeType === 1) {
+            if (node.tagName === 'IMG') {
+              node.setAttribute('data-image-filter-prehide', 'true');
+            } else if (node.querySelectorAll) {
+              node.querySelectorAll('img').forEach(img => {
+                img.setAttribute('data-image-filter-prehide', 'true');
+              });
+            }
+          }
+        });
+      });
+      applyFilters();
     }
   });
 
   const startObserving = () => {
     if (document.body) {
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true
-      });
+      observer.observe(document.body, { childList: true, subtree: true });
     } else {
       requestAnimationFrame(startObserving);
     }
@@ -93,17 +107,15 @@ function observeDOMForFilterApplication() {
   startObserving();
 }
 
-// 메시지 수신
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  switch (message.action) {
+// DOMContentLoaded 이전에 최대한 빨리 숨김 적용
+preHideImages();
+
+chrome.runtime.onMessage.addListener((message) => {
+  const { action } = message;
+
+  switch (action) {
     case "hideImages":
-      toggleImageClass(CLASS_HIDDEN);
-      break;
-    case "blurImages":
-      toggleImageClass(CLASS_BLUR);
-      break;
-    case "resizeImages":
-      toggleImageClass(CLASS_RESIZE);
+      applyFilters();
       break;
     case "enableAllFilters":
       isFilterEnabled = true;
@@ -113,34 +125,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       isFilterEnabled = false;
       removeFilters();
       break;
-    default:
-      console.warn(`[Image Filter] 알 수 없는 action: ${message.action}`);
   }
 });
 
-// 개별 필터 토글
-function toggleImageClass(className) {
-  const images = document.querySelectorAll("img");
-  images.forEach((img) => {
-    img.classList.toggle(className);
-  });
-
-  const bgElements = document.querySelectorAll("*");
-  bgElements.forEach((el) => {
-    const bg = el.style.backgroundImage || window.getComputedStyle(el).getPropertyValue("background-image");
-    if (bg && bg !== "none") {
-      el.classList.toggle(CLASS_BG_HIDE);
-    }
-  });
-}
-
-// 초기 상태 불러와 필터 적용
 chrome.storage.local.get(["filterEnabled"], (result) => {
   isFilterEnabled = result.filterEnabled ?? false;
-  if (isFilterEnabled) {
-    applyFilters();
-  }
+  updateStyle();
+  if (isFilterEnabled) applyFilters();
 });
 
-// DOM 감시 시작
 observeDOMForFilterApplication();
