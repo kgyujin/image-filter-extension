@@ -9,13 +9,17 @@
 ## 디렉터리 구조
 ```
 image-filter-extension/
+├── icons/
+│   ├── icon128_off.png
+│   ├── icon128_on.png
+│   ├── icon16_off.png
+│   ├── icon16_on.png
+│   ├── icon48_off.png
+│   └── icon48_on.png
+├── README.md
 ├── background.js
 ├── content.js
-├── styles/
-│   └── popup.css
-├── content.js
-├── manifest.json
-└── README.md
+└── manifest.json
 ```
 
 ## 파일 설명
@@ -33,7 +37,7 @@ image-filter-extension/
   - 이미지 숨기기
 
 ## 실행 방법(과정)
-1. [해당 저장소](https://github.com/kgyujin/image-filter-extension) **[Release]** 페이지로 이동
+1. [해당 저장소](https://github.com/kgyujin/image-filter-extension)의 **[Release]** 페이지로 이동
 2. 가장 최신 릴리즈의 **Assets**에서 ZIP 파일 다운로드
 3. 다운로드한 ZIP 파일 압축 해제
 4. Chrome 주소창에 `chrome://extensions/` 입력
